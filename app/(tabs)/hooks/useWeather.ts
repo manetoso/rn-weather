@@ -13,7 +13,7 @@ export const useWeather = () => {
   const [errorMsg, setErrorMsg] = useState('')
   const [loading, setLoading] = useState(true)
 
-  const getWeatherData = async (lat: number, lon: number, name: string) => {
+  const getWeatherData = async (lat: number, lon: number) => {
     try {
       setLoading(true)
       const today = new Date()
@@ -24,7 +24,7 @@ export const useWeather = () => {
         })}, ${today.toLocaleTimeString()}`
       )
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=14139611c1c12d2a9360c41c74383411&units=metric&exclude=minutely,hourly,alerts`
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=14139611c1c12d2a9360c41c74383411&units=metric`
       )
       const data = await response.json()
       setWeatherData(data)

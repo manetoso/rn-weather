@@ -27,7 +27,7 @@ export default function HomeScreen() {
     try {
       setRefreshing(true)
       if (coords === null) throw new Error('No location data')
-      await getWeatherData(coords.latitude, coords.longitude, 'charmander')
+      await getWeatherData(coords.latitude, coords.longitude)
     } catch (error) {
       let message
       if (error instanceof Error) message = error.message
@@ -40,7 +40,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (coords === null) return
-    getWeatherData(coords.latitude, coords.longitude, 'ditto')
+    getWeatherData(coords.latitude, coords.longitude)
   }, [coords]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
