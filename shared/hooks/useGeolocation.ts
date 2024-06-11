@@ -6,7 +6,9 @@ import {
   LocationGeocodedAddress
 } from 'expo-location'
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// 14139611c1c12d2a9360c41c74383411
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export const useGeolocation = () => {
   const [location, setLocation] = useState<LocationGeocodedAddress | null>(null)
@@ -23,6 +25,7 @@ export const useGeolocation = () => {
 
   const getLocation = async () => {
     try {
+      await sleep(3000)
       let location = await getCurrentPositionAsync({})
       if (location) {
         let addresses = await reverseGeocodeAsync(location.coords)
@@ -34,7 +37,6 @@ export const useGeolocation = () => {
       else message = String(error)
       setErrorMsg(message)
     } finally {
-			await sleep(3000)
       setLoading(false)
     }
   }
