@@ -1,47 +1,56 @@
-import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet } from 'react-native'
+import { useCallback, useEffect, useState } from 'react'
+import { ActivityIndicator, Image, RefreshControl, StyleSheet } from 'react-native'
 
-import { useGeolocation } from '@/shared/hooks/useGeolocation'
-import { HelloWave } from '@/shared/components/HelloWave'
 import ParallaxScrollView from '@/shared/components/ParallaxScrollView'
+import { HelloWave } from '@/shared/components/HelloWave'
 import { ThemedText } from '@/shared/components/ThemedText'
 import { ThemedView } from '@/shared/components/ThemedView'
-import { Colors } from '@/shared/constants/Colors'
-import { useCallback, useState } from 'react'
 import { Switch } from '@/shared/components/Switch'
-import { SingleDayTemp } from './components/SingleDayTemp'
-
-import Resp from '@/shared/constants/Response.json'
+import { useGeolocation } from '@/shared/hooks/useGeolocation'
+import { useWeather } from './hooks/useWeather'
+import { WeatherData } from './components/WeatherData'
+import { Colors } from '@/shared/constants/Colors'
 
 export default function HomeScreen() {
-  const { errorMsg, location, loading } = useGeolocation()
+  const { errorMsg, location, coords, loading } = useGeolocation()
+  const {
+    dateFormatted,
+    errorMsg: weatherErrorMsg,
+    getWeatherData,
+    loading: weatherLoading,
+    setErrorMsg,
+    weatherData
+  } = useWeather()
   const [refreshing, setRefreshing] = useState(false)
-  const [dateFormatted, setDateFormatted] = useState(() => {
-    const today = new Date()
-    return `${today.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    })}, ${today.toLocaleTimeString()}`
-  })
 
-  const onRefresh = useCallback(() => {
-    const today = new Date()
-    setRefreshing(true)
-    setTimeout(() => {
+  const onRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true)
+      if (coords === null) throw new Error('No location data')
+      await getWeatherData(coords.latitude, coords.longitude, 'charmander')
+    } catch (error) {
+      let message
+      if (error instanceof Error) message = error.message
+      else message = String(error)
+      setErrorMsg(message)
+    } finally {
       setRefreshing(false)
-      setDateFormatted(
-        `${today.toLocaleString('en-US', {
-          month: 'short',
-          day: 'numeric'
-        })}, ${today.toLocaleTimeString()}`
-      )
-    }, 2000)
-  }, [])
+    }
+  }, [coords]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (coords === null) return
+    getWeatherData(coords.latitude, coords.longitude, 'ditto')
+  }, [coords]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: Colors.light.tabIconSelected, dark: '#1D3D47' }}
       headerImage={
         <Image
-          source={{ uri: 'https://openweathermap.org/img/wn/01d@4x.png' }}
+          source={{
+            uri: `https://openweathermap.org/img/wn/${weatherData?.weather[0].icon || '01d'}@4x.png`
+          }}
           style={styles.reactLogo}
         />
       }
@@ -66,38 +75,12 @@ export default function HomeScreen() {
         </Switch.Case>
 
         <Switch.Default>
-          <ThemedView style={styles.stepContainer}>
-            <ThemedText type="default">
-              {dateFormatted !== '' ? `${dateFormatted}` : 'Loading...'}{' '}
-            </ThemedText>
-            <ThemedText type="subtitle">
-              {location?.city}, {location?.country}
-            </ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.stepContainer}>
-            <ThemedText type="defaultSemiBold">
-              Feels like {Resp.current.feels_like} °C.{' '}
-              {Resp.current.weather.map((w) => w.description).join(', ')}
-            </ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.mainInfoContainer}>
-            <ThemedText type="title">{Resp.current.temp} °C</ThemedText>
-            <ThemedView style={styles.stepContainer}>
-              <ThemedText type="default">Humidity: {Resp.current.humidity}%</ThemedText>
-              <ThemedText type="default">Dew point: {Resp.current.dew_point} °C</ThemedText>
-              <ThemedText type="default">Wind: {Resp.current.wind_speed} m/s</ThemedText>
-              <ThemedText type="default">Visibility: {Resp.current.visibility} m</ThemedText>
-            </ThemedView>
-          </ThemedView>
-
-          <ThemedView style={styles.titleContainer}>
-            <ThemedText type="title">8-day forecast</ThemedText>
-          </ThemedView>
-
-          <FlatList
-            data={Resp.daily}
-            renderItem={({ item }) => <SingleDayTemp detail={item} />}
-            keyExtractor={(item) => item.dt.toString()}
+          <WeatherData
+            dateFormatted={dateFormatted}
+            location={location!}
+            loading={weatherLoading}
+            weatherData={weatherData}
+            error={weatherErrorMsg}
           />
         </Switch.Default>
       </Switch>

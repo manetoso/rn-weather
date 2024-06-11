@@ -3,14 +3,12 @@ import {
   requestForegroundPermissionsAsync,
   getCurrentPositionAsync,
   reverseGeocodeAsync,
-  LocationGeocodedAddress
+  type LocationGeocodedAddress,
+  type LocationObjectCoords
 } from 'expo-location'
 
-// 14139611c1c12d2a9360c41c74383411
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
 export const useGeolocation = () => {
+  const [coords, setCoords] = useState<LocationObjectCoords | null>(null)
   const [location, setLocation] = useState<LocationGeocodedAddress | null>(null)
   const [errorMsg, setErrorMsg] = useState<string>('')
   const [loading, setLoading] = useState(true)
@@ -25,8 +23,8 @@ export const useGeolocation = () => {
 
   const getLocation = async () => {
     try {
-      await sleep(3000)
       let location = await getCurrentPositionAsync({})
+      setCoords(location.coords)
       if (location) {
         let addresses = await reverseGeocodeAsync(location.coords)
         setLocation(addresses[0])
@@ -50,5 +48,10 @@ export const useGeolocation = () => {
     getLocationData()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { loading, location, errorMsg }
+  return {
+    coords,
+    errorMsg,
+    loading,
+    location
+  }
 }
